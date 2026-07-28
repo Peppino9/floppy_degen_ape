@@ -561,6 +561,8 @@ body {
   .apeintosh__shell {
     aspect-ratio: auto;
     width: 100%;
+    display: flex;
+    justify-content: center;
   }
 
   .apeintosh__frame,
@@ -573,7 +575,7 @@ body {
     position: relative;
     left: auto;
     top: auto;
-    width: 100%;
+    width: auto;
     height: auto;
     border-radius: 8px;
     overflow: hidden;
@@ -581,10 +583,13 @@ body {
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
   }
 
+  /* Keep true 2:3 aspect — no stretch / weird resize */
   #game {
-    width: 100%;
+    display: block;
+    width: min(100vw - 1.3rem, 400px);
     height: auto;
-    max-height: min(68dvh, 600px);
+    max-height: min(62dvh, 600px);
+    max-width: min(100%, calc(min(62dvh, 600px) * 400 / 600));
     aspect-ratio: 400 / 600;
   }
 
@@ -611,13 +616,14 @@ body {
   }
 
   .glow-orb {
-    opacity: 0.15;
+    display: none;
   }
 }
 
 @media (max-width: 420px) {
   #game {
-    max-height: min(62dvh, 560px);
+    max-height: min(58dvh, 560px);
+    max-width: min(100%, calc(min(58dvh, 560px) * 400 / 600));
   }
 }
 

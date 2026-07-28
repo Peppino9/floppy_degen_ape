@@ -41,6 +41,10 @@
   const SBF_ACTIVATE_SCORE = 3;
   const RETRY_DELAY_MS = 750; // prevent space/tap from instantly skipping game over
   const MAX_PARTICLES = 120;
+  const FIXED_DT = 1000 / 60;
+  const IS_MOBILE =
+    window.matchMedia("(max-width: 700px)").matches ||
+    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   // ----------------------------------------------------------
   // Audio — Web Audio monkey flap + crash (muteable)
@@ -1134,13 +1138,15 @@
   let particles = [];
 
   function trimParticles() {
-    if (particles.length > MAX_PARTICLES) {
-      particles.splice(0, particles.length - MAX_PARTICLES);
+    const cap = IS_MOBILE ? 40 : MAX_PARTICLES;
+    if (particles.length > cap) {
+      particles.splice(0, particles.length - cap);
     }
   }
 
   function spawnFlapParticles(x, y) {
-    for (let i = 0; i < 6; i++) {
+    const count = IS_MOBILE ? 3 : 6;
+    for (let i = 0; i < count; i++) {
       particles.push({
         x: x + (Math.random() - 0.5) * 8,
         y: y + (Math.random() - 0.5) * 8,
@@ -1159,7 +1165,8 @@
   }
 
   function spawnExplodeParticles(x, y) {
-    for (let i = 0; i < 22; i++) {
+    const count = IS_MOBILE ? 10 : 22;
+    for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 1.5 + Math.random() * 4;
       const isBanana = Math.random() < 0.55;
@@ -1273,6 +1280,20 @@
     ctx.beginPath();
     ctx.arc(300, 70, 36, 0, Math.PI * 2);
     ctx.fill();
+
+    if (IS_MOBILE) {
+      // Lighter backdrop for phones — fewer ellipses / vines
+      drawTree(90, H - 36, 1.05, 0.55);
+      drawTree(250, H - 36, 1.15, 0.55);
+      ctx.fillStyle = COLORS.canopyDark;
+      for (let x = -((groundOffset * 0.4) % 48); x < W + 40; x += 48) {
+        ctx.beginPath();
+        ctx.ellipse(x, 6, 26, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return;
+    }
+
     ctx.fillStyle = "rgba(255, 250, 200, 0.5)";
     ctx.beginPath();
     ctx.arc(300, 70, 18, 0, Math.PI * 2);
@@ -1312,7 +1333,6 @@
       ctx.moveTo(vx, 0);
       ctx.quadraticCurveTo(vx + 8, 40, vx - 4, 70 + (i % 3) * 12);
       ctx.stroke();
-      // Leaf tufts on vine
       ctx.fillStyle = COLORS.leafLite;
       ctx.beginPath();
       ctx.ellipse(vx - 4, 55 + (i % 3) * 10, 5, 3, 0.5, 0, Math.PI * 2);
@@ -1349,15 +1369,17 @@
     }
 
     // Scrolling degen ticker on the forest floor
-    const tape = TICKER_BITS.join("  ·  ") + "  ·  ";
-    ctx.font = '8px "Press Start 2P", monospace';
-    ctx.fillStyle = "rgba(255, 223, 0, 0.35)";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    const tapeW = ctx.measureText(tape).width;
-    const ox = -((groundOffset * 0.6) % tapeW);
-    ctx.fillText(tape, ox, gy + 28);
-    ctx.fillText(tape, ox + tapeW, gy + 28);
+    if (!IS_MOBILE) {
+      const tape = TICKER_BITS.join("  ·  ") + "  ·  ";
+      ctx.font = '8px "Press Start 2P", monospace';
+      ctx.fillStyle = "rgba(255, 223, 0, 0.35)";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      const tapeW = ctx.measureText(tape).width;
+      const ox = -((groundOffset * 0.6) % tapeW);
+      ctx.fillText(tape, ox, gy + 28);
+      ctx.fillText(tape, ox + tapeW, gy + 28);
+    }
   }
 
   // ----------------------------------------------------------
@@ -1718,8 +1740,23 @@
     ctx.restore();
   }
 
-  function loop() {
-    update();
+  let lastFrameTime = performance.now();
+  let timeAccum = 0;
+
+  function loop(now) {
+    // Fixed 60Hz sim — phones at 30fps stay normal speed (not slow-mo)
+    let frameDt = now - lastFrameTime;
+    lastFrameTime = now;
+    if (frameDt > 100) frameDt = 100;
+    timeAccum += frameDt;
+
+    let steps = 0;
+    while (timeAccum >= FIXED_DT && steps < 5) {
+      update();
+      timeAccum -= FIXED_DT;
+      steps++;
+    }
+
     draw();
     requestAnimationFrame(loop);
   }
