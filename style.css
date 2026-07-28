@@ -1,0 +1,491 @@
+/* ============================================================
+   FLOPPY DEGEN APE — Apeintosh IT bezel + History Class branding
+   ============================================================ */
+
+:root {
+  --bg-deep: #110620;
+  --lavender: #bb89ff;
+  --gold: #fbe271;
+  --cream: #f5f0e6;
+  --muted: rgba(255, 255, 255, 0.55);
+
+  /* Screen viewport inside apeintosh.png (764×1024) */
+  --screen-left: 14.4%;
+  --screen-top: 9.15%;
+  --screen-width: 71.2%;
+  --screen-height: 47.85%;
+
+  /* Game display size (same as pre-bezel layout) */
+  --game-size: min(92vw, 400px);
+  --game-height: calc(var(--game-size) * 1.5);
+  /* Shell sized so CRT height fits the full game */
+  --shell-height: calc(var(--game-height) / 0.4785);
+  --shell-width: calc(var(--shell-height) * 764 / 1024);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  color: var(--cream);
+  font-family: "Montserrat", system-ui, sans-serif;
+  background: #000;
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  padding: clamp(0.5rem, 2vw, 1rem);
+  width: 100%;
+  max-width: min(100vw, calc(var(--shell-width) + 14rem));
+}
+
+/* ---- Leaderboard panel ---- */
+.leaderboard {
+  flex: 0 0 auto;
+  width: min(220px, 92vw);
+  padding: 0.85rem 0.75rem;
+  border: 2px solid rgba(187, 137, 255, 0.45);
+  border-radius: 6px;
+  background: rgba(17, 6, 32, 0.88);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.leaderboard__title {
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.62rem;
+  color: var(--lavender);
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+}
+
+.leaderboard__sub {
+  margin-top: 0.35rem;
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.leaderboard__form {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.leaderboard__label {
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.leaderboard__input {
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid rgba(187, 137, 255, 0.35);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--cream);
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.55rem;
+  outline: none;
+}
+
+.leaderboard__input:focus {
+  border-color: var(--lavender);
+  box-shadow: 0 0 0 2px rgba(187, 137, 255, 0.25);
+}
+
+.leaderboard__input--pulse {
+  animation: lb-pulse 0.45s ease-in-out 3;
+}
+
+@keyframes lb-pulse {
+  0%, 100% { border-color: rgba(187, 137, 255, 0.35); }
+  50% { border-color: var(--gold); box-shadow: 0 0 8px rgba(251, 226, 113, 0.35); }
+}
+
+.leaderboard__btn {
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid rgba(251, 226, 113, 0.45);
+  border-radius: 4px;
+  background: rgba(251, 226, 113, 0.12);
+  color: var(--gold);
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.leaderboard__btn:hover:not(:disabled) {
+  background: rgba(251, 226, 113, 0.22);
+}
+
+.leaderboard__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.leaderboard__btn--save {
+  margin-top: 0.45rem;
+}
+
+.leaderboard__status {
+  margin-top: 0.45rem;
+  font-size: 0.48rem;
+  line-height: 1.45;
+  color: var(--muted);
+  min-height: 0.7rem;
+}
+
+.leaderboard__status--error {
+  color: #ff7b7b;
+}
+
+.leaderboard__list {
+  margin-top: 0.65rem;
+  list-style: none;
+  display: grid;
+  gap: 0.28rem;
+  max-height: min(50vh, 420px);
+  overflow-y: auto;
+}
+
+.leaderboard__row {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr auto;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.28rem 0.35rem;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.48rem;
+}
+
+.leaderboard__row--you {
+  background: rgba(187, 137, 255, 0.18);
+  border: 1px solid rgba(187, 137, 255, 0.35);
+}
+
+.leaderboard__rank {
+  color: var(--lavender);
+  text-align: center;
+}
+
+.leaderboard__name {
+  color: var(--cream);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard__score {
+  color: var(--gold);
+  text-align: right;
+}
+
+.leaderboard__empty {
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.48rem;
+  color: var(--muted);
+  line-height: 1.5;
+  padding: 0.35rem;
+}
+
+.leaderboard__note {
+  margin-top: 0.55rem;
+  font-size: 0.42rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.28);
+  line-height: 1.4;
+}
+
+.arcade {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0;
+  width: min(100%, var(--shell-width));
+}
+
+.glow-orb {
+  pointer-events: none;
+  position: fixed;
+  width: min(40vw, 260px);
+  height: min(40vw, 260px);
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.25;
+  z-index: 0;
+  animation: drift 14s ease-in-out infinite alternate;
+}
+
+.glow-orb--left {
+  top: 8%;
+  left: -6%;
+  background: var(--lavender);
+}
+
+.glow-orb--right {
+  right: -6%;
+  bottom: 10%;
+  background: var(--gold);
+  animation-delay: -5s;
+}
+
+@keyframes drift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(18px, -12px) scale(1.05); }
+}
+
+.arcade__brand {
+  text-align: center;
+}
+
+.arcade__eyebrow {
+  font-size: clamp(0.5rem, 1.6vw, 0.62rem);
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--lavender);
+  margin-bottom: 0.35rem;
+}
+
+.arcade__title {
+  font-family: "Bungee", "Montserrat", system-ui, sans-serif;
+  font-size: clamp(1.4rem, 5.5vw, 2rem);
+  color: var(--lavender);
+  text-shadow: -2px 3px 4px rgba(0, 0, 0, 0.5);
+  line-height: 1.05;
+}
+
+.arcade__subtitle {
+  margin-top: 0.3rem;
+  font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* ---- Apeintosh monitor shell ---- */
+.apeintosh {
+  width: min(96vw, var(--shell-width));
+  filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.65));
+}
+
+.apeintosh__shell {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 764 / 1024;
+}
+
+/* CRT viewport — game renders on top of the bezel PNG */
+.apeintosh__screen {
+  position: absolute;
+  z-index: 2;
+  left: var(--screen-left);
+  top: var(--screen-top);
+  width: var(--screen-width);
+  height: var(--screen-height);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  overflow: hidden;
+  background: #070707;
+  border-radius: 4.5% / 3.5%;
+  box-shadow:
+    inset 0 0 18px rgba(0, 0, 0, 0.85),
+    inset 0 2px 4px rgba(255, 255, 255, 0.04);
+}
+
+/* Pixel CRT black on the side letterbox bars */
+.apeintosh__pillar {
+  flex: 1 1 0;
+  min-width: 0;
+  background-color: #080808;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(180, 255, 180, 0.045) 0,
+      rgba(180, 255, 180, 0.045) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(180, 255, 180, 0.045) 0,
+      rgba(180, 255, 180, 0.045) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    repeating-conic-gradient(
+      #050505 0% 25%,
+      #181818 0% 50%
+    );
+  background-size: auto, auto, 5px 5px;
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.8),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.apeintosh__pillar::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.55) 0,
+    rgba(0, 0, 0, 0.55) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+#game {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: none;
+  aspect-ratio: 400 / 600;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.apeintosh__scanlines {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 3px
+  );
+  opacity: 0.3;
+}
+
+/* Bezel PNG underneath — screen layer covers the baked-in black CRT area */
+.apeintosh__frame {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.arcade__hint {
+  font-size: clamp(0.5rem, 1.4vw, 0.62rem);
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.arcade__footer {
+  font-size: 0.5rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .page {
+    flex-direction: column;
+    align-items: center;
+    max-width: 100vw;
+  }
+
+  .leaderboard {
+    width: min(100%, var(--shell-width));
+    order: 2;
+  }
+
+  .arcade {
+    order: 1;
+  }
+
+  .leaderboard__list {
+    max-height: min(36vh, 280px);
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .arcade {
+    gap: 0.5rem;
+  }
+
+  .arcade__eyebrow {
+    display: none;
+  }
+
+  .apeintosh {
+    width: min(96vw, var(--shell-width));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-orb {
+    animation: none;
+  }
+}

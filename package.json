@@ -1,0 +1,12 @@
+{
+  "name": "floppy-degen-ape",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Floppy Degen Ape — canvas game with shared leaderboard",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
