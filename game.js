@@ -37,9 +37,152 @@
   });
 
   const STORAGE_KEY = "degenFlopHighScore";
+  const SOUND_KEY = "floppyDegenApeSoundOn";
   const SBF_ACTIVATE_SCORE = 3;
   const RETRY_DELAY_MS = 750; // prevent space/tap from instantly skipping game over
   const MAX_PARTICLES = 120;
+
+  // ----------------------------------------------------------
+  // Audio — Web Audio monkey flap + crash (muteable)
+  // ----------------------------------------------------------
+  let audioCtx = null;
+  let soundOn = localStorage.getItem(SOUND_KEY) !== "0";
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function tone(freq, dur, type, gain, slideTo) {
+    const ctx = ensureAudio();
+    if (!ctx || !soundOn) return;
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type || "square";
+    osc.frequency.setValueAtTime(freq, t0);
+    if (slideTo != null) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, slideTo), t0 + dur);
+    }
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g);
+    g.connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
+
+  function noiseBurst(dur, gain, highpass) {
+    const ctx = ensureAudio();
+    if (!ctx || !soundOn) return;
+    const t0 = ctx.currentTime;
+    const len = Math.floor(ctx.sampleRate * dur);
+    const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = highpass || 800;
+    filter.Q.value = 0.8;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(gain, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(filter);
+    filter.connect(g);
+    g.connect(ctx.destination);
+    src.start(t0);
+  }
+
+  /** Monkey “uhh” grunt on flap */
+  function playJumpSound() {
+    const ctx = ensureAudio();
+    if (!ctx || !soundOn) return;
+
+    const t0 = ctx.currentTime;
+    const f0 = 125 + Math.random() * 30;
+
+    const osc = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const g = ctx.createGain();
+
+    osc.type = "sawtooth";
+    osc2.type = "triangle";
+    // “uhh” — starts mid-low, drops a little like a grunt
+    osc.frequency.setValueAtTime(f0, t0);
+    osc.frequency.exponentialRampToValueAtTime(f0 * 0.78, t0 + 0.2);
+    osc2.frequency.setValueAtTime(f0 * 1.85, t0);
+    osc2.frequency.exponentialRampToValueAtTime(f0 * 1.35, t0 + 0.2);
+
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(480, t0);
+    filter.frequency.linearRampToValueAtTime(320, t0 + 0.2);
+    filter.Q.value = 4.2;
+
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.2, t0 + 0.025);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.24);
+
+    osc.connect(filter);
+    osc2.connect(filter);
+    filter.connect(g);
+    g.connect(ctx.destination);
+
+    osc.start(t0);
+    osc2.start(t0);
+    osc.stop(t0 + 0.28);
+    osc2.stop(t0 + 0.28);
+
+    // Soft breath so it feels vocal, not a beep
+    noiseBurst(0.14, 0.045, 420);
+  }
+
+  /** Bonk / crash when rekt */
+  function playCrashSound() {
+    if (!soundOn) return;
+    ensureAudio();
+    noiseBurst(0.28, 0.22, 350);
+    tone(180, 0.22, "sawtooth", 0.12, 55);
+    setTimeout(() => tone(90, 0.35, "triangle", 0.1, 40), 60);
+  }
+
+  function setSoundEnabled(on) {
+    soundOn = Boolean(on);
+    localStorage.setItem(SOUND_KEY, soundOn ? "1" : "0");
+    syncSoundButton();
+    if (soundOn) {
+      ensureAudio();
+      playJumpSound();
+    }
+  }
+
+  function syncSoundButton() {
+    const btn = document.getElementById("sound-toggle");
+    if (!btn) return;
+    btn.setAttribute("aria-pressed", soundOn ? "true" : "false");
+    btn.classList.toggle("is-muted", !soundOn);
+    btn.textContent = soundOn ? "SOUND ON" : "SOUND OFF";
+  }
+
+  function bindSoundButton() {
+    const btn = document.getElementById("sound-toggle");
+    if (!btn) return;
+    syncSoundButton();
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      setSoundEnabled(!soundOn);
+    });
+  }
 
   // ----------------------------------------------------------
   // Degen Ape Academy / Dingus Forest humor
@@ -618,6 +761,7 @@
     ape.vy = JUMP_FORCE;
     ape.flapTimer = 14;
     spawnFlapParticles(ape.x + ape.w * 0.15, ape.y + ape.h * 0.55);
+    playJumpSound();
   }
 
   function updateApeRotation() {
@@ -1432,6 +1576,7 @@
     resetApe();
     resetPipes();
     resetSbf();
+    if (window.FloppyAnalytics) window.FloppyAnalytics.gameStart();
     flap(); // initial boost so player isn't dead on spawn
   }
 
@@ -1441,6 +1586,7 @@
     gameOverAt = performance.now();
     shakeMagnitude = 10;
     shakeDuration = 18;
+    playCrashSound();
     spawnExplodeParticles(ape.x + ape.w / 2, ape.y + ape.h / 2);
 
     rektTitle = pick(REKT_TITLES);
@@ -1454,6 +1600,7 @@
     if (window.FloppyLeaderboard) {
       window.FloppyLeaderboard.onGameOver(score);
     }
+    if (window.FloppyAnalytics) window.FloppyAnalytics.gameOver(score);
   }
 
   function canRetry() {
@@ -1579,5 +1726,6 @@
 
   // Boot
   resetApe();
+  bindSoundButton();
   requestAnimationFrame(loop);
 })();

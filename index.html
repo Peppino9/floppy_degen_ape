@@ -9,67 +9,79 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Montserrat:wght@300;500;800;900&family=Press+Start+2P&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <script src="analytics.js"></script>
 </head>
 <body>
   <div class="glow-orb glow-orb--left" aria-hidden="true"></div>
   <div class="glow-orb glow-orb--right" aria-hidden="true"></div>
 
+  <button
+    type="button"
+    class="sound-toggle"
+    id="sound-toggle"
+    aria-pressed="true"
+    aria-label="Toggle sound"
+  >SOUND ON</button>
+
   <div class="page">
     <aside class="leaderboard" id="leaderboard" aria-label="Leaderboard">
-      <h2 class="leaderboard__title">TOP APES</h2>
-      <p class="leaderboard__sub">Dingus Forest high scores</p>
+      <div class="leaderboard__head">
+        <h2 class="leaderboard__title">TOP APES</h2>
+        <p class="leaderboard__sub">Dingus Forest high scores</p>
+      </div>
 
       <form class="leaderboard__form" id="lb-form">
         <label class="leaderboard__label" for="lb-username">Username</label>
-        <input
-          class="leaderboard__input"
-          id="lb-username"
-          type="text"
-          maxlength="16"
-          autocomplete="off"
-          spellcheck="false"
-          placeholder="DEGEN_APE"
-        />
-        <button class="leaderboard__btn" type="submit">Set name</button>
+        <div class="leaderboard__row-inputs">
+          <input
+            class="leaderboard__input"
+            id="lb-username"
+            type="text"
+            maxlength="16"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="DEGEN_APE"
+          />
+          <button class="leaderboard__btn" type="submit">Set</button>
+        </div>
       </form>
-
       <button class="leaderboard__btn leaderboard__btn--save" id="lb-save" type="button" disabled>
         Save last run
       </button>
       <p class="leaderboard__status" id="lb-status" aria-live="polite"></p>
 
       <ol class="leaderboard__list" id="lb-list"></ol>
-      <p class="leaderboard__note">Global scores · saved on your server (data/scores.json)</p>
+      <p class="leaderboard__note">Global · saved in Supabase</p>
     </aside>
 
     <main class="arcade">
-    <header class="arcade__brand">
-      <p class="arcade__eyebrow">Degenerate Laboratories Incorporated</p>
-      <h1 class="arcade__title">FLOPPY DEGEN APE</h1>
-      <p class="arcade__subtitle">Running on Apeintosh IT</p>
-    </header>
+      <header class="arcade__brand">
+        <p class="arcade__eyebrow">Degenerate Laboratories Incorporated</p>
+        <h1 class="arcade__title">FLOPPY DEGEN APE</h1>
+        <p class="arcade__subtitle">Running on Apeintosh IT</p>
+      </header>
 
-    <div class="apeintosh" aria-label="Apeintosh IT computer">
-      <div class="apeintosh__shell">
-        <div class="apeintosh__screen">
-          <div class="apeintosh__pillar" aria-hidden="true"></div>
-          <canvas id="game" width="400" height="600" aria-label="Floppy Degen Ape game canvas"></canvas>
-          <div class="apeintosh__pillar" aria-hidden="true"></div>
-          <div class="apeintosh__scanlines" aria-hidden="true"></div>
+      <div class="apeintosh" aria-label="Apeintosh IT computer">
+        <div class="apeintosh__shell">
+          <div class="apeintosh__screen">
+            <div class="apeintosh__pillar" aria-hidden="true"></div>
+            <canvas id="game" width="400" height="600" aria-label="Floppy Degen Ape game canvas"></canvas>
+            <div class="apeintosh__pillar" aria-hidden="true"></div>
+            <div class="apeintosh__scanlines" aria-hidden="true"></div>
+          </div>
+          <img
+            class="apeintosh__frame"
+            src="apeintosh.png"
+            width="764"
+            height="1024"
+            alt=""
+            draggable="false"
+          />
         </div>
-        <img
-          class="apeintosh__frame"
-          src="apeintosh.png"
-          width="764"
-          height="1024"
-          alt=""
-          draggable="false"
-        />
       </div>
-    </div>
 
-    <p class="arcade__hint">Space / Tap to flop · Dodge candles · Frank is typing…</p>
-    <p class="arcade__footer">Welcome to the Academy · Dingus Forest elective</p>
+      <p class="arcade__hint">Space / Tap to flop · Dodge candles · Frank is typing…</p>
+      <p class="arcade__footer">Welcome to the Academy · Dingus Forest elective</p>
     </main>
   </div>
 

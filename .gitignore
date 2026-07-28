@@ -1,0 +1,7 @@
+node_modules/
+.vercel
+.env
+.env.local
+data/scores.json
+data/scores.json.tmp
+.DS_Store
