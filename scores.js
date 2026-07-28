@@ -12,7 +12,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const { createClient } = require("@supabase/supabase-js");
 
-const USERNAME_RE = /^[a-zA-Z0-9_]{2,16}$/;
+const USERNAME_RE = /^[a-zA-Z0-9_@]{2,16}$/;
 const MAX_SCORE = 100000;
 
 const FILE_PATH = process.env.VERCEL
@@ -20,9 +20,9 @@ const FILE_PATH = process.env.VERCEL
   : path.join(__dirname, "data", "scores.json");
 
 function getSupabase() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
+  const url = (process.env.SUPABASE_URL || "").trim();
+  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  if (!url || !key || key.includes("paste_")) return null;
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -57,8 +57,7 @@ async function readScores() {
     const { data, error } = await supabase
       .from("leaderboard")
       .select("username, score, updated_at")
-      .order("score", { ascending: false })
-      .order("updated_at", { ascending: true });
+      .order("score", { ascending: false });
 
     if (error) throw error;
 

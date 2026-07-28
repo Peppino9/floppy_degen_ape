@@ -1576,7 +1576,7 @@
     resetApe();
     resetPipes();
     resetSbf();
-    if (window.FloppyAnalytics) window.FloppyAnalytics.gameStart();
+    if (window.FloppyAnalytics?.gameStart) window.FloppyAnalytics.gameStart();
     flap(); // initial boost so player isn't dead on spawn
   }
 
@@ -1600,7 +1600,7 @@
     if (window.FloppyLeaderboard) {
       window.FloppyLeaderboard.onGameOver(score);
     }
-    if (window.FloppyAnalytics) window.FloppyAnalytics.gameOver(score);
+    if (window.FloppyAnalytics?.gameOver) window.FloppyAnalytics.gameOver(score);
   }
 
   function canRetry() {

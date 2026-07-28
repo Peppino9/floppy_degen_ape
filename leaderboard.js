@@ -6,7 +6,7 @@
   "use strict";
 
   const USERNAME_KEY = "floppyDegenApeUsername";
-  const USERNAME_RE = /^[a-zA-Z0-9_]{2,16}$/;
+  const USERNAME_RE = /^[a-zA-Z0-9_@]{2,16}$/;
   const API = "/api/leaderboard";
   const REFRESH_MS = 30000;
 
@@ -203,7 +203,7 @@
         e.preventDefault();
         const ok = setUsername(inputEl?.value || "");
         if (!ok) {
-          setStatus("2–16 chars: letters, numbers, underscore", true);
+          setStatus("2–16 chars: letters, numbers, _, @", true);
           return;
         }
         setStatus(`Playing as ${getUsername()}`);

@@ -7,14 +7,20 @@
 
   const MEASUREMENT_ID = "G-XXXXXXXXXX"; // ← replace with your real ID
 
+  function noop() {}
+
+  const stub = {
+    ready: false,
+    event: noop,
+    gameStart: noop,
+    gameOver: noop,
+  };
+
   if (!MEASUREMENT_ID || MEASUREMENT_ID.includes("XXXX")) {
     console.warn(
       "[analytics] Set MEASUREMENT_ID in analytics.js to enable Google Analytics."
     );
-    window.FloppyAnalytics = {
-      ready: false,
-      event() {},
-    };
+    window.FloppyAnalytics = stub;
     return;
   }
 
