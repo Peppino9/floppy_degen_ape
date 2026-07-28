@@ -731,7 +731,7 @@
       activateSbf();
     } else if (newScore % 5 === 0) {
       showToast(pick(SCORE_JOKES), COLORS.neon);
-    } else if (Math.random() < 0.45) {
+    } else if (!IS_MOBILE && Math.random() < 0.45) {
       showToast(pick(SCORE_JOKES), COLORS.magenta);
     }
   }
@@ -1265,14 +1265,20 @@
     ctx.fill();
   }
 
+  let skyGradient = null;
+  function getSkyGradient() {
+    if (!skyGradient) {
+      skyGradient = ctx.createLinearGradient(0, 0, 0, H);
+      skyGradient.addColorStop(0, COLORS.skyTop);
+      skyGradient.addColorStop(0.35, "#9bc4a0");
+      skyGradient.addColorStop(0.65, COLORS.skyMid);
+      skyGradient.addColorStop(1, COLORS.skyBot);
+    }
+    return skyGradient;
+  }
+
   function drawBackground() {
-    // Daytime forest sky → canopy haze
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, COLORS.skyTop);
-    g.addColorStop(0.35, "#9bc4a0");
-    g.addColorStop(0.65, COLORS.skyMid);
-    g.addColorStop(1, COLORS.skyBot);
-    ctx.fillStyle = g;
+    ctx.fillStyle = getSkyGradient();
     ctx.fillRect(0, 0, W, H);
 
     // Soft sun through leaves
@@ -1745,6 +1751,7 @@
 
   function loop(now) {
     // Fixed 60Hz sim — phones at 30fps stay normal speed (not slow-mo)
+    // ProMotion 120Hz: still only update+draw at 60Hz (drawing every 120Hz frame was the lag)
     let frameDt = now - lastFrameTime;
     lastFrameTime = now;
     if (frameDt > 100) frameDt = 100;
@@ -1757,7 +1764,7 @@
       steps++;
     }
 
-    draw();
+    if (steps > 0) draw();
     requestAnimationFrame(loop);
   }
 
