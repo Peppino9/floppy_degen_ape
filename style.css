@@ -504,18 +504,19 @@ body {
   }
 }
 
-/* ---- Phone: almost fullscreen game, no Apeintosh chrome ---- */
+/* ---- Phone: fullscreen playable game, leaderboard scrolls below ---- */
 @media (max-width: 700px) {
   :root {
     --game-size: 100vw;
-    --mobile-top: calc(2.1rem + env(safe-area-inset-top, 0px));
-    --mobile-bottom: env(safe-area-inset-bottom, 0px);
-    --mobile-game-h: calc(100dvh - var(--mobile-top) - var(--mobile-bottom));
+    /* Visible viewport with Safari chrome — playable area first */
+    --mobile-game-h: 100vh;
+    --mobile-game-h: 100svh;
   }
 
   html,
   body {
-    height: 100%;
+    height: auto;
+    min-height: 100%;
     overscroll-behavior: none;
     -webkit-user-select: none;
     user-select: none;
@@ -535,7 +536,8 @@ body {
     gap: 0;
     padding: 0;
     max-width: 100vw;
-    min-height: 100dvh;
+    min-height: 100vh;
+    min-height: 100svh;
   }
 
   .arcade {
@@ -544,15 +546,8 @@ body {
     gap: 0;
   }
 
-  .arcade__brand {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: var(--mobile-top);
-    padding: env(safe-area-inset-top, 0px) 3.5rem 0 0.75rem;
-    box-sizing: border-box;
-  }
-
+  /* Title lives in-canvas — HTML brand was clipping under Safari chrome */
+  .arcade__brand,
   .arcade__eyebrow,
   .arcade__subtitle,
   .arcade__hint,
@@ -560,12 +555,7 @@ body {
     display: none;
   }
 
-  .arcade__title {
-    font-size: 0.78rem;
-    letter-spacing: 0.02em;
-  }
-
-  /* Flatten shell — edge-to-edge canvas */
+  /* Flatten shell — edge-to-edge playable area */
   .apeintosh {
     width: 100%;
     filter: none;
@@ -575,10 +565,13 @@ body {
     aspect-ratio: auto;
     width: 100%;
     height: var(--mobile-game-h);
+    min-height: var(--mobile-game-h);
     display: flex;
     justify-content: center;
     align-items: center;
     background: #050505;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
   }
 
   .apeintosh__frame,
@@ -594,7 +587,7 @@ body {
     width: 100%;
     height: 100%;
     border-radius: 0;
-    overflow: visible;
+    overflow: hidden;
     background: #050505;
     box-shadow: none;
     display: flex;
@@ -602,16 +595,15 @@ body {
     justify-content: center;
   }
 
-  /* Fit entire 400×600 map on screen — never crop top/bottom */
+  /* Largest 400×600 fit inside the shell — full map, no crop */
   #game {
     display: block;
     width: auto;
     height: auto;
-    max-width: 100vw;
+    max-width: 100%;
     max-height: 100%;
     aspect-ratio: 400 / 600;
     image-rendering: auto;
-    /* Own compositor layer — reduces Safari paint jank while scrolling/tapping */
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     backface-visibility: hidden;
@@ -625,11 +617,11 @@ body {
     border-left: none;
     border-right: none;
     border-bottom: none;
-    padding: 1rem 0.85rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    padding: 1.1rem 0.85rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
   }
 
   .leaderboard__list {
-    max-height: min(40vh, 280px);
+    max-height: min(50vh, 320px);
   }
 
   .leaderboard__title {
@@ -637,20 +629,15 @@ body {
   }
 
   .sound-toggle {
-    top: max(0.45rem, env(safe-area-inset-top, 0px));
-    right: 0.45rem;
+    top: max(0.55rem, env(safe-area-inset-top, 0px));
+    right: 0.55rem;
     font-size: 0.42rem;
     padding: 0.4rem 0.55rem;
+    z-index: 20;
   }
 
   .glow-orb {
     display: none;
-  }
-}
-
-@media (max-width: 420px) {
-  .arcade__title {
-    font-size: 0.7rem;
   }
 }
 

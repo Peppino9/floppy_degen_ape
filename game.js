@@ -620,29 +620,6 @@
     c.save();
     c.translate(x + s / 2, y + s / 2 + Math.sin(sbf.bob) * 3);
 
-    if (IS_MOBILE) {
-      // Cheap stand-in — full face is too many paths for 120Hz phones
-      c.fillStyle = "rgba(0,0,0,0.25)";
-      c.beginPath();
-      c.ellipse(0, s * 0.4, s * 0.32, 4, 0, 0, Math.PI * 2);
-      c.fill();
-      c.fillStyle = "#2a1810";
-      c.beginPath();
-      c.arc(0, -s * 0.08, s * 0.38, 0, Math.PI * 2);
-      c.fill();
-      c.fillStyle = "#f0c9a0";
-      c.beginPath();
-      c.arc(0, 0, s * 0.28, 0, Math.PI * 2);
-      c.fill();
-      c.fillStyle = "#1a1a2e";
-      c.fillRect(-s * 0.12, -s * 0.06, s * 0.08, s * 0.08);
-      c.fillRect(s * 0.04, -s * 0.06, s * 0.08, s * 0.08);
-      c.fillStyle = "#c45c5c";
-      c.fillRect(-s * 0.1, s * 0.1, s * 0.2, s * 0.06);
-      c.restore();
-      return;
-    }
-
     // Shadow
     c.fillStyle = "rgba(0,0,0,0.3)";
     c.beginPath();
@@ -1118,15 +1095,12 @@
     ctx.fillStyle = bodyColor;
     ctx.fillRect(x, y, PIPE_WIDTH, h);
 
-    ctx.fillStyle = edgeColor;
-    ctx.fillRect(x, y, PIPE_WIDTH, 3);
-    ctx.fillRect(x, y + h - 3, PIPE_WIDTH, 3);
-
-    if (IS_MOBILE) return;
-
     // Inner highlight / edge for depth
     ctx.fillStyle = "rgba(255,255,255,0.12)";
     ctx.fillRect(x + 3, y + 2, 6, Math.max(0, h - 4));
+    ctx.fillStyle = edgeColor;
+    ctx.fillRect(x, y, PIPE_WIDTH, 3);
+    ctx.fillRect(x, y + h - 3, PIPE_WIDTH, 3);
 
     // Tiny OHLC tick marks on the side
     ctx.fillStyle = "rgba(0,0,0,0.25)";
@@ -1210,7 +1184,7 @@
   }
 
   function spawnFlapParticles(x, y) {
-    const count = IS_MOBILE ? 2 : 6;
+    const count = IS_MOBILE ? 4 : 6;
     for (let i = 0; i < count; i++) {
       particles.push({
         x: x + (Math.random() - 0.5) * 8,
@@ -1219,9 +1193,9 @@
         vy: (Math.random() - 0.5) * 2.5,
         life: 22 + Math.random() * 16,
         max: 38,
-        size: IS_MOBILE ? 5 + Math.random() * 3 : 7 + Math.random() * 5,
+        size: 7 + Math.random() * 5,
         color: COLORS.banana,
-        kind: IS_MOBILE ? "pixel" : "banana",
+        kind: "banana",
         rot: Math.random() * Math.PI * 2,
         spin: (Math.random() - 0.5) * 0.35,
       });
@@ -1230,7 +1204,7 @@
   }
 
   function spawnExplodeParticles(x, y) {
-    const count = IS_MOBILE ? 8 : 22;
+    const count = IS_MOBILE ? 14 : 22;
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 1.5 + Math.random() * 4;
@@ -1352,37 +1326,23 @@
     ctx.arc(300, 70, 36, 0, Math.PI * 2);
     ctx.fill();
 
-    if (IS_MOBILE) {
-      // Minimal backdrop — soft sun + flat canopy strip (no trees/ellipses)
-      ctx.fillStyle = "rgba(255, 230, 140, 0.28)";
-      ctx.beginPath();
-      ctx.arc(300, 70, 28, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = COLORS.canopyDark;
-      ctx.fillRect(0, 0, W, 22);
-      ctx.fillStyle = COLORS.leaf;
-      const canopyShift = -((groundOffset * 0.35) % 40);
-      for (let x = canopyShift; x < W + 40; x += 40) {
-        ctx.fillRect(x, 14, 22, 8);
-      }
-      return;
-    }
-
     ctx.fillStyle = "rgba(255, 250, 200, 0.5)";
     ctx.beginPath();
     ctx.arc(300, 70, 18, 0, Math.PI * 2);
     ctx.fill();
 
-    // Far trees (parallax)
+    // Far trees (parallax) — fewer on phones
     drawTree(40, H - 36, 0.7, 0.25);
     drawTree(160, H - 36, 0.85, 0.25);
-    drawTree(280, H - 36, 0.65, 0.25);
-    drawTree(380, H - 36, 0.9, 0.25);
+    if (!IS_MOBILE) {
+      drawTree(280, H - 36, 0.65, 0.25);
+      drawTree(380, H - 36, 0.9, 0.25);
+    }
 
     // Mid trees
     drawTree(90, H - 36, 1.15, 0.55);
     drawTree(230, H - 36, 1.05, 0.55);
-    drawTree(350, H - 36, 1.2, 0.55);
+    if (!IS_MOBILE) drawTree(350, H - 36, 1.2, 0.55);
 
     // Canopy fringe along the top
     ctx.fillStyle = COLORS.canopyDark;
@@ -1399,9 +1359,10 @@
     }
 
     // Hanging vines
+    const vineCount = IS_MOBILE ? 3 : 5;
     ctx.strokeStyle = COLORS.moss;
     ctx.lineWidth = 2;
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < vineCount; i++) {
       const vx = ((i * 85 + 30 - groundOffset * 0.7) % (W + 60)) - 20;
       ctx.beginPath();
       ctx.moveTo(vx, 0);
@@ -1412,6 +1373,8 @@
       ctx.ellipse(vx - 4, 55 + (i % 3) * 10, 5, 3, 0.5, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    if (IS_MOBILE) return;
 
     // Dappled light patches
     ctx.fillStyle = "rgba(255, 240, 160, 0.07)";
@@ -1435,9 +1398,6 @@
     for (let x = -((groundOffset | 0) % 20); x < W; x += 20) {
       ctx.fillRect(x, gy, 12, 3);
     }
-
-    if (IS_MOBILE) return;
-
     // Dirt clumps / roots
     ctx.fillStyle = COLORS.trunkDark;
     for (let x = -((groundOffset * 0.8) % 28); x < W; x += 28) {
@@ -1446,15 +1406,17 @@
     }
 
     // Scrolling degen ticker on the forest floor
-    const tape = TICKER_BITS.join("  ·  ") + "  ·  ";
-    ctx.font = '8px "Press Start 2P", monospace';
-    ctx.fillStyle = "rgba(255, 223, 0, 0.35)";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    const tapeW = ctx.measureText(tape).width;
-    const ox = -((groundOffset * 0.6) % tapeW);
-    ctx.fillText(tape, ox, gy + 28);
-    ctx.fillText(tape, ox + tapeW, gy + 28);
+    if (!IS_MOBILE) {
+      const tape = TICKER_BITS.join("  ·  ") + "  ·  ";
+      ctx.font = '8px "Press Start 2P", monospace';
+      ctx.fillStyle = "rgba(255, 223, 0, 0.35)";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      const tapeW = ctx.measureText(tape).width;
+      const ox = -((groundOffset * 0.6) % tapeW);
+      ctx.fillText(tape, ox, gy + 28);
+      ctx.fillText(tape, ox + tapeW, gy + 28);
+    }
   }
 
   // ----------------------------------------------------------
@@ -1563,8 +1525,12 @@
     // Rotating Academy roast
     drawWrappedCenter(startJoke, 340, 8, COLORS.banana, W - 56 - 36);
 
-    drawCenteredText("Press Space / Tap", 400, 10, COLORS.dim, null);
-    drawCenteredText("to Jump", 420, 10, COLORS.dim, null);
+    if (IS_MOBILE) {
+      drawCenteredText("Tap to Jump", 410, 10, COLORS.dim, null);
+    } else {
+      drawCenteredText("Press Space / Tap", 400, 10, COLORS.dim, null);
+      drawCenteredText("to Jump", 420, 10, COLORS.dim, null);
+    }
 
     drawCenteredText(`HI ${highScore}`, 460, 12, COLORS.cream, null);
 
@@ -1787,8 +1753,8 @@
   function draw() {
     ctx.save();
 
-    // Screen shake (skip on phones — random translate every frame feels stuttery)
-    if (!IS_MOBILE && shakeMagnitude > 0.4) {
+    // Screen shake
+    if (shakeMagnitude > 0.4) {
       const dx = (Math.random() - 0.5) * shakeMagnitude * 2;
       const dy = (Math.random() - 0.5) * shakeMagnitude * 2;
       ctx.translate(dx, dy);
