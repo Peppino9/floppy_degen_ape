@@ -5,7 +5,7 @@
 (() => {
   "use strict";
 
-  const MEASUREMENT_ID = "G-XXXXXXXXXX"; // ← replace with your real ID
+  const MEASUREMENT_ID = "G-08FY3BK8T3"; // ← replace with your real ID
 
   function noop() {}
 
