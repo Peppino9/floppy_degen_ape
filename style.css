@@ -508,9 +508,14 @@ body {
 @media (max-width: 700px) {
   :root {
     --game-size: 100vw;
-    /* Visible viewport with Safari chrome — playable area first */
-    --mobile-game-h: 100vh;
-    --mobile-game-h: 100svh;
+    --mobile-bar: 2.15rem;
+    --mobile-gap: 0.4rem;
+    --mobile-top: calc(
+      env(safe-area-inset-top, 0px) + var(--mobile-bar) + var(--mobile-gap)
+    );
+    /* Game gets remaining visible viewport — never cropped by the top bar */
+    --mobile-game-h: calc(100vh - var(--mobile-top));
+    --mobile-game-h: calc(100svh - var(--mobile-top));
   }
 
   html,
@@ -546,13 +551,34 @@ body {
     gap: 0;
   }
 
-  /* Title lives in-canvas — HTML brand was clipping under Safari chrome */
-  .arcade__brand,
+  /* Slim top bar — same row vibe as SOUND ON */
+  .arcade__brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(env(safe-area-inset-top, 0px) + var(--mobile-bar));
+    padding: env(safe-area-inset-top, 0px) 4.75rem 0 0.75rem;
+    box-sizing: border-box;
+    background: #050505;
+  }
+
   .arcade__eyebrow,
-  .arcade__subtitle,
+  .arcade__title,
   .arcade__hint,
   .arcade__footer {
     display: none;
+  }
+
+  .arcade__subtitle {
+    display: block;
+    margin: 0;
+    font-size: 0.48rem;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
 
   /* Flatten shell — edge-to-edge playable area */
@@ -570,7 +596,7 @@ body {
     justify-content: center;
     align-items: center;
     background: #050505;
-    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+    padding: 0 0 env(safe-area-inset-bottom, 0px);
     box-sizing: border-box;
   }
 
@@ -629,7 +655,7 @@ body {
   }
 
   .sound-toggle {
-    top: max(0.55rem, env(safe-area-inset-top, 0px));
+    top: calc(env(safe-area-inset-top, 0px) + 0.45rem);
     right: 0.55rem;
     font-size: 0.42rem;
     padding: 0.4rem 0.55rem;
