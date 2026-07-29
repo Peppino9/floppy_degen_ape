@@ -459,11 +459,16 @@
     };
   }
 
-  function updateToast() {
+  function updateToast(dt) {
     if (!toast) return;
-    toast.life--;
-    toast.y -= 0.25;
+    toast.life -= dt;
+    toast.y -= 0.25 * dt;
     if (toast.life <= 0) toast = null;
+  }
+
+  /** Frame-rate independent exponential approach */
+  function approach(current, target, rate, dt) {
+    return current + (target - current) * (1 - Math.pow(1 - rate, dt));
   }
 
   function drawToast() {
@@ -534,17 +539,17 @@
     showToast(sbf.speech, "#ffb347", 110);
   }
 
-  function updateSbf() {
+  function updateSbf(dt) {
     if (!sbf.active) return;
 
-    sbf.bob += 0.12;
-    if (sbf.speechTimer > 0) sbf.speechTimer--;
-    sbf.timer--;
+    sbf.bob += 0.12 * dt;
+    if (sbf.speechTimer > 0) sbf.speechTimer -= dt;
+    sbf.timer -= dt;
 
     if (sbf.mode === "follow") {
-      sbf.x += (SBF_FOLLOW_X - sbf.x) * 0.12;
-      sbf.y += (ape.y + ape.h * 0.1 - sbf.y) * 0.06;
-      sbf.trackY += (ape.y + ape.h * 0.12 - sbf.trackY) * 0.08;
+      sbf.x = approach(sbf.x, SBF_FOLLOW_X, 0.12, dt);
+      sbf.y = approach(sbf.y, ape.y + ape.h * 0.1, 0.06, dt);
+      sbf.trackY = approach(sbf.trackY, ape.y + ape.h * 0.12, 0.08, dt);
 
       if (sbf.timer <= 0) {
         sbf.mode = "telegraph";
@@ -555,8 +560,8 @@
       }
     } else if (sbf.mode === "telegraph") {
       sbf.x = SBF_FOLLOW_X + Math.sin(frame * 1.2) * 3;
-      sbf.trackY += (ape.y + ape.h * 0.12 - sbf.trackY) * 0.14;
-      sbf.y += (sbf.trackY - sbf.y) * 0.2;
+      sbf.trackY = approach(sbf.trackY, ape.y + ape.h * 0.12, 0.14, dt);
+      sbf.y = approach(sbf.y, sbf.trackY, 0.2, dt);
 
       if (sbf.timer <= 0) {
         sbf.mode = "lunge";
@@ -564,8 +569,8 @@
         sbf.whiffed = false;
       }
     } else if (sbf.mode === "lunge") {
-      sbf.x += SBF_LUNGE_SPEED;
-      sbf.y += (sbf.lockY - sbf.y) * 0.15;
+      sbf.x += SBF_LUNGE_SPEED * dt;
+      sbf.y = approach(sbf.y, sbf.lockY, 0.15, dt);
 
       // Cosmetic only — overlap triggers a joke, never death
       if (!sbf.whiffed && aabb(apeHitbox(), sbfHitbox())) {
@@ -582,7 +587,7 @@
         }
       }
     } else if (sbf.mode === "retreat") {
-      sbf.x -= 6;
+      sbf.x -= 6 * dt;
       if (sbf.x <= SBF_FOLLOW_X) {
         sbf.x = SBF_FOLLOW_X;
         sbf.mode = "follow";
@@ -614,6 +619,29 @@
     const s = size;
     c.save();
     c.translate(x + s / 2, y + s / 2 + Math.sin(sbf.bob) * 3);
+
+    if (IS_MOBILE) {
+      // Cheap stand-in — full face is too many paths for 120Hz phones
+      c.fillStyle = "rgba(0,0,0,0.25)";
+      c.beginPath();
+      c.ellipse(0, s * 0.4, s * 0.32, 4, 0, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = "#2a1810";
+      c.beginPath();
+      c.arc(0, -s * 0.08, s * 0.38, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = "#f0c9a0";
+      c.beginPath();
+      c.arc(0, 0, s * 0.28, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = "#1a1a2e";
+      c.fillRect(-s * 0.12, -s * 0.06, s * 0.08, s * 0.08);
+      c.fillRect(s * 0.04, -s * 0.06, s * 0.08, s * 0.08);
+      c.fillStyle = "#c45c5c";
+      c.fillRect(-s * 0.1, s * 0.1, s * 0.2, s * 0.06);
+      c.restore();
+      return;
+    }
 
     // Shadow
     c.fillStyle = "rgba(0,0,0,0.3)";
@@ -778,17 +806,17 @@
     }
   }
 
-  function updateApe() {
-    ape.vy = Math.min(ape.vy + GRAVITY, MAX_VELOCITY);
-    ape.y += ape.vy;
-    if (ape.flapTimer > 0) ape.flapTimer--;
-    ape.armPhase += 0.18;
+  function updateApe(dt) {
+    ape.vy = Math.min(ape.vy + GRAVITY * dt, MAX_VELOCITY);
+    ape.y += ape.vy * dt;
+    if (ape.flapTimer > 0) ape.flapTimer = Math.max(0, ape.flapTimer - dt);
+    ape.armPhase += 0.18 * dt;
     updateApeRotation();
   }
 
-  function updateApeHover() {
-    ape.hoverPhase += 0.06;
-    ape.armPhase += 0.08;
+  function updateApeHover(dt) {
+    ape.hoverPhase += 0.06 * dt;
+    ape.armPhase += 0.08 * dt;
     ape.y = H * 0.38 + Math.sin(ape.hoverPhase) * 10;
     ape.rotation = Math.sin(ape.hoverPhase * 0.5) * 0.1;
   }
@@ -970,12 +998,46 @@
     c.restore();
   }
 
+  // Cache Kong bitmap on phones — pixel head is too expensive every frame
+  const kongCache = document.createElement("canvas");
+  kongCache.width = 72;
+  kongCache.height = 84;
+  const kongCacheCtx = kongCache.getContext("2d");
+  let kongCacheKey = "";
+
+  function kongPoseKey() {
+    const flapBucket = ape.flapTimer > 0 ? Math.ceil(ape.flapTimer / 3) : 0;
+    const fallBucket = ape.vy < 0 ? 0 : ape.vy < 4 ? 1 : 2;
+    const armBucket = (ape.armPhase * 2.2) | 0;
+    const idle = state === STATES.START ? 1 : 0;
+    return flapBucket + "|" + fallBucket + "|" + armBucket + "|" + idle;
+  }
+
   function drawApe() {
     ctx.save();
     ctx.translate(ape.x + ape.w / 2, ape.y + ape.h / 2);
     ctx.rotate(ape.rotation);
     ctx.imageSmoothingEnabled = false;
-    drawKongBody(ctx);
+
+    if (IS_MOBILE) {
+      const key = kongPoseKey();
+      if (key !== kongCacheKey) {
+        kongCacheKey = key;
+        kongCacheCtx.clearRect(0, 0, kongCache.width, kongCache.height);
+        kongCacheCtx.save();
+        kongCacheCtx.translate(kongCache.width / 2, kongCache.height / 2);
+        kongCacheCtx.imageSmoothingEnabled = false;
+        drawKongBody(kongCacheCtx);
+        kongCacheCtx.restore();
+      }
+      ctx.drawImage(
+        kongCache,
+        -kongCache.width / 2,
+        -kongCache.height / 2
+      );
+    } else {
+      drawKongBody(ctx);
+    }
     ctx.restore();
   }
 
@@ -1005,8 +1067,8 @@
     });
   }
 
-  function updatePipes() {
-    spawnTimer++;
+  function updatePipes(dt) {
+    spawnTimer += dt;
     if (spawnTimer >= SPAWN_INTERVAL) {
       spawnTimer = 0;
       spawnPipe();
@@ -1014,7 +1076,7 @@
 
     for (let i = pipes.length - 1; i >= 0; i--) {
       const p = pipes[i];
-      p.x -= PIPE_SPEED;
+      p.x -= PIPE_SPEED * dt;
 
       // Score when ape clears the candlestick
       if (!p.scored && p.x + PIPE_WIDTH < ape.x) {
@@ -1056,12 +1118,15 @@
     ctx.fillStyle = bodyColor;
     ctx.fillRect(x, y, PIPE_WIDTH, h);
 
-    // Inner highlight / edge for depth
-    ctx.fillStyle = "rgba(255,255,255,0.12)";
-    ctx.fillRect(x + 3, y + 2, 6, Math.max(0, h - 4));
     ctx.fillStyle = edgeColor;
     ctx.fillRect(x, y, PIPE_WIDTH, 3);
     ctx.fillRect(x, y + h - 3, PIPE_WIDTH, 3);
+
+    if (IS_MOBILE) return;
+
+    // Inner highlight / edge for depth
+    ctx.fillStyle = "rgba(255,255,255,0.12)";
+    ctx.fillRect(x + 3, y + 2, 6, Math.max(0, h - 4));
 
     // Tiny OHLC tick marks on the side
     ctx.fillStyle = "rgba(0,0,0,0.25)";
@@ -1145,7 +1210,7 @@
   }
 
   function spawnFlapParticles(x, y) {
-    const count = IS_MOBILE ? 3 : 6;
+    const count = IS_MOBILE ? 2 : 6;
     for (let i = 0; i < count; i++) {
       particles.push({
         x: x + (Math.random() - 0.5) * 8,
@@ -1154,9 +1219,9 @@
         vy: (Math.random() - 0.5) * 2.5,
         life: 22 + Math.random() * 16,
         max: 38,
-        size: 7 + Math.random() * 5,
+        size: IS_MOBILE ? 5 + Math.random() * 3 : 7 + Math.random() * 5,
         color: COLORS.banana,
-        kind: "banana",
+        kind: IS_MOBILE ? "pixel" : "banana",
         rot: Math.random() * Math.PI * 2,
         spin: (Math.random() - 0.5) * 0.35,
       });
@@ -1165,7 +1230,7 @@
   }
 
   function spawnExplodeParticles(x, y) {
-    const count = IS_MOBILE ? 10 : 22;
+    const count = IS_MOBILE ? 8 : 22;
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 1.5 + Math.random() * 4;
@@ -1187,14 +1252,14 @@
     trimParticles();
   }
 
-  function updateParticles() {
+  function updateParticles(dt) {
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.12;
-      p.rot += p.spin || 0;
-      p.life--;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 0.12 * dt;
+      p.rot += (p.spin || 0) * dt;
+      p.life -= dt;
       if (p.life <= 0) particles.splice(i, 1);
     }
   }
@@ -1288,14 +1353,17 @@
     ctx.fill();
 
     if (IS_MOBILE) {
-      // Lighter backdrop for phones — fewer ellipses / vines
-      drawTree(90, H - 36, 1.05, 0.55);
-      drawTree(250, H - 36, 1.15, 0.55);
+      // Minimal backdrop — soft sun + flat canopy strip (no trees/ellipses)
+      ctx.fillStyle = "rgba(255, 230, 140, 0.28)";
+      ctx.beginPath();
+      ctx.arc(300, 70, 28, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = COLORS.canopyDark;
-      for (let x = -((groundOffset * 0.4) % 48); x < W + 40; x += 48) {
-        ctx.beginPath();
-        ctx.ellipse(x, 6, 26, 18, 0, 0, Math.PI * 2);
-        ctx.fill();
+      ctx.fillRect(0, 0, W, 22);
+      ctx.fillStyle = COLORS.leaf;
+      const canopyShift = -((groundOffset * 0.35) % 40);
+      for (let x = canopyShift; x < W + 40; x += 40) {
+        ctx.fillRect(x, 14, 22, 8);
       }
       return;
     }
@@ -1367,6 +1435,9 @@
     for (let x = -((groundOffset | 0) % 20); x < W; x += 20) {
       ctx.fillRect(x, gy, 12, 3);
     }
+
+    if (IS_MOBILE) return;
+
     // Dirt clumps / roots
     ctx.fillStyle = COLORS.trunkDark;
     for (let x = -((groundOffset * 0.8) % 28); x < W; x += 28) {
@@ -1375,17 +1446,15 @@
     }
 
     // Scrolling degen ticker on the forest floor
-    if (!IS_MOBILE) {
-      const tape = TICKER_BITS.join("  ·  ") + "  ·  ";
-      ctx.font = '8px "Press Start 2P", monospace';
-      ctx.fillStyle = "rgba(255, 223, 0, 0.35)";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      const tapeW = ctx.measureText(tape).width;
-      const ox = -((groundOffset * 0.6) % tapeW);
-      ctx.fillText(tape, ox, gy + 28);
-      ctx.fillText(tape, ox + tapeW, gy + 28);
-    }
+    const tape = TICKER_BITS.join("  ·  ") + "  ·  ";
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.fillStyle = "rgba(255, 223, 0, 0.35)";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    const tapeW = ctx.measureText(tape).width;
+    const ox = -((groundOffset * 0.6) % tapeW);
+    ctx.fillText(tape, ox, gy + 28);
+    ctx.fillText(tape, ox + tapeW, gy + 28);
   }
 
   // ----------------------------------------------------------
@@ -1657,13 +1726,12 @@
   }
 
   window.addEventListener("keydown", onKeyDown);
-  canvas.addEventListener("mousedown", (e) => {
-    e.preventDefault();
-    handleAction();
-  });
+
+  // Single pointer path — avoids iOS touchstart + synthetic mousedown double flaps
   canvas.addEventListener(
-    "touchstart",
+    "pointerdown",
     (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
       e.preventDefault();
       handleAction();
     },
@@ -1673,25 +1741,25 @@
   // ----------------------------------------------------------
   // Main loop
   // ----------------------------------------------------------
-  function update() {
-    frame++;
+  function update(dt) {
+    frame += dt;
 
     if (state === STATES.START) {
-      updateApeHover();
-      updateParticles();
-      groundOffset += 1.2;
-      startJokeTimer++;
+      updateApeHover(dt);
+      updateParticles(dt);
+      groundOffset += 1.2 * dt;
+      startJokeTimer += dt;
       if (startJokeTimer > 180) {
         startJokeTimer = 0;
         startJoke = pick(START_JOKES);
       }
     } else if (state === STATES.PLAYING) {
-      updateApe();
-      updatePipes();
-      updateSbf();
-      updateParticles();
-      updateToast();
-      groundOffset += PIPE_SPEED;
+      updateApe(dt);
+      updatePipes(dt);
+      updateSbf(dt);
+      updateParticles(dt);
+      updateToast(dt);
+      groundOffset += PIPE_SPEED * dt;
       if (groundOffset > 50000) groundOffset %= 10000;
 
       if (checkCollisions()) {
@@ -1700,17 +1768,17 @@
     } else if (state === STATES.GAMEOVER) {
       // Brief residual fall / settle
       if (shakeDuration > 0) {
-        ape.vy = Math.min(ape.vy + GRAVITY * 0.5, MAX_VELOCITY);
-        ape.y = Math.min(ape.y + ape.vy * 0.4, H - 36 - ape.h);
+        ape.vy = Math.min(ape.vy + GRAVITY * 0.5 * dt, MAX_VELOCITY);
+        ape.y = Math.min(ape.y + ape.vy * 0.4 * dt, H - 36 - ape.h);
         updateApeRotation();
       }
-      updateParticles();
-      updateToast();
+      updateParticles(dt);
+      updateToast(dt);
     }
 
     if (shakeDuration > 0) {
-      shakeDuration--;
-      shakeMagnitude *= 0.9;
+      shakeDuration -= dt;
+      shakeMagnitude *= Math.pow(0.9, dt);
     } else {
       shakeMagnitude = 0;
     }
@@ -1719,8 +1787,8 @@
   function draw() {
     ctx.save();
 
-    // Screen shake
-    if (shakeMagnitude > 0.4) {
+    // Screen shake (skip on phones — random translate every frame feels stuttery)
+    if (!IS_MOBILE && shakeMagnitude > 0.4) {
       const dx = (Math.random() - 0.5) * shakeMagnitude * 2;
       const dy = (Math.random() - 0.5) * shakeMagnitude * 2;
       ctx.translate(dx, dy);
@@ -1750,21 +1818,27 @@
   let timeAccum = 0;
 
   function loop(now) {
-    // Fixed 60Hz sim — phones at 30fps stay normal speed (not slow-mo)
-    // ProMotion 120Hz: still only update+draw at 60Hz (drawing every 120Hz frame was the lag)
     let frameDt = now - lastFrameTime;
     lastFrameTime = now;
-    if (frameDt > 100) frameDt = 100;
-    timeAccum += frameDt;
+    if (frameDt < 0) frameDt = 0;
+    if (frameDt > 48) frameDt = 48;
 
-    let steps = 0;
-    while (timeAccum >= FIXED_DT && steps < 5) {
-      update();
-      timeAccum -= FIXED_DT;
-      steps++;
+    if (IS_MOBILE) {
+      // Phones: one sim+draw tick ~60Hz. Larger dt on hitch (not 3 stacked steps).
+      timeAccum += frameDt;
+      if (timeAccum < FIXED_DT) {
+        requestAnimationFrame(loop);
+        return;
+      }
+      const dt = Math.min(timeAccum / FIXED_DT, 2);
+      timeAccum = 0;
+      update(dt);
+      draw();
+    } else {
+      // Desktop: track display refresh (incl. ProMotion) with scaled dt
+      update(frameDt / FIXED_DT);
+      draw();
     }
-
-    if (steps > 0) draw();
     requestAnimationFrame(loop);
   }
 

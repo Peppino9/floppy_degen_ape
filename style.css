@@ -508,18 +508,25 @@ body {
 @media (max-width: 700px) {
   :root {
     --game-size: 100vw;
-    --mobile-chrome: calc(2.4rem + env(safe-area-inset-top, 0px));
+    --mobile-top: calc(2.1rem + env(safe-area-inset-top, 0px));
+    --mobile-bottom: env(safe-area-inset-bottom, 0px);
+    --mobile-game-h: calc(100dvh - var(--mobile-top) - var(--mobile-bottom));
   }
 
   html,
   body {
     height: 100%;
     overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
 
   body {
     align-items: stretch;
     justify-content: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .page {
@@ -527,7 +534,6 @@ body {
     align-items: stretch;
     gap: 0;
     padding: 0;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
     max-width: 100vw;
     min-height: 100dvh;
   }
@@ -542,8 +548,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: var(--mobile-chrome);
-    padding: env(safe-area-inset-top, 0px) 3.5rem 0.25rem 0.75rem;
+    height: var(--mobile-top);
+    padding: env(safe-area-inset-top, 0px) 3.5rem 0 0.75rem;
     box-sizing: border-box;
   }
 
@@ -568,8 +574,10 @@ body {
   .apeintosh__shell {
     aspect-ratio: auto;
     width: 100%;
+    height: var(--mobile-game-h);
     display: flex;
     justify-content: center;
+    align-items: center;
     background: #050505;
   }
 
@@ -584,26 +592,29 @@ body {
     left: auto;
     top: auto;
     width: 100%;
-    height: auto;
+    height: 100%;
     border-radius: 0;
-    overflow: hidden;
+    overflow: visible;
     background: #050505;
     box-shadow: none;
     display: flex;
+    align-items: center;
     justify-content: center;
   }
 
-  /* Nearly fullscreen 2:3 playfield */
+  /* Fit entire 400×600 map on screen — never crop top/bottom */
   #game {
     display: block;
-    width: min(
-      100vw,
-      calc((100dvh - var(--mobile-chrome) - env(safe-area-inset-bottom, 0px)) * 400 / 600)
-    );
+    width: auto;
     height: auto;
-    max-height: calc(100dvh - var(--mobile-chrome) - env(safe-area-inset-bottom, 0px));
+    max-width: 100vw;
+    max-height: 100%;
     aspect-ratio: 400 / 600;
     image-rendering: auto;
+    /* Own compositor layer — reduces Safari paint jank while scrolling/tapping */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
   }
 
   .leaderboard {
